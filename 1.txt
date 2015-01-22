@@ -1,0 +1,192 @@
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+using namespace std;
+
+struct Item {
+  Item(int v, Item* n) { val = v; next = n; }
+  int val;
+  Item* next;
+};
+
+Item* concatenate(Item* head1, Item* head2);  // returns head pointer to new list
+void removeEvens(Item*& head);
+double findAverage(Item* head);
+double findAverageHelper(Item* head);
+int itemNumber(Item* head);
+
+void printList(ostream& ofile, Item* head);
+
+int main(int argc, char* argv[]){
+
+if(argc<3){
+	cout << "Error: Insufficient argument" << endl;
+	return 1;
+}
+
+	ifstream infile(argv[1]);
+	ofstream ofile(argv[2]);
+	string a;
+	getline(infile, a);
+	string b;
+	getline(infile, b);
+	stringstream stream1(a);
+	vector <int> line1;
+	vector <int> line2;
+	while(1){
+		int temp;
+		stream1 >> temp;
+		if(!stream1)
+			break;
+		line1.push_back(temp);
+	}
+	stringstream  stream2(b);
+	while(1){
+		int temp;
+		stream2 >> temp;
+		if(!stream2)
+			break;
+		line2.push_back(temp);
+	}
+//Now the numbers in two line are stored in 2 vector
+
+Item* head1 = new Item(0, NULL);
+Item* head2 = new Item(0, NULL);
+Item* temp = head1;
+
+for(unsigned int i=0;i < line1.size(); i++){
+	temp->val = line1[i];
+	temp->next = new Item(0, NULL);
+	temp = temp->next;
+}
+temp = head2;
+
+for(unsigned int i=0;i < line2.size(); i++){
+	temp->val = line2[i];
+	temp->next = new Item(0, NULL);
+	temp = temp->next;
+}
+//finish building two lists
+
+//combine two lists
+Item* head = concatenate(head1, head2);
+printList(ofile, head);
+//delete even numbers in the COMBINED List
+removeEvens(head);
+printList(ofile, head);
+//calculate avg
+double avg = findAverage(head);
+printList(ofile, head);
+ofile << avg;
+}
+
+//recursive read through list 1, then change and guide the next of the last
+//member in list 1 to the head of list 2
+Item* concatenate(Item* head1, Item* head2){
+	Item* current = NULL;
+	if(head1==NULL){
+		//cout << "Error: empty list" << endl;
+		return NULL;
+	}	
+	else if(head2->next == NULL){
+		//cout << "Note: This is the end of List 2" << endl;
+		return NULL;
+	}
+
+	else if(head1->next == NULL){
+		//cout << "Note: This is the end of List 1" << endl;
+		current = head2;
+		head2 = head2->next;
+	}
+
+	else{
+		current = head1;
+		head1 = head1->next;
+	}
+	Item* newList = new Item(0, NULL);
+	newList->val = current->val;
+	//cout << newList->val << endl;
+	newList->next = concatenate(head1, head2);
+	return newList;
+}
+
+void removeEvens(Item*& head){
+	if(head == NULL){
+		//cout << "Error: empty list" << endl;
+		return;
+	}
+	
+	if(head->val %2==0){ //this item is /2
+		if(head->next == NULL){//and this item is the last item
+			Item* temp = head;
+			head = NULL;
+			delete temp;
+			return;
+		}
+		else{//but this item is not the last item
+			Item* temp = head;
+			head = head->next;
+			delete temp;
+		}
+		removeEvens(head);
+	}
+	else if(head->next==NULL){//this item is not /2, but is the last
+		return;
+	}
+	else if(head->next ->val%2==0){//next item is/2
+		Item* temp = head->next;
+		head->next = head->next ->next;
+		delete temp;
+		removeEvens(head->next);
+	}
+	else{
+		removeEvens(head->next);
+	}
+}
+
+double findAverage(Item* head){
+
+	double sum = findAverageHelper(head);
+	//cout << "Sum:" << sum << endl;
+	int items = itemNumber(head);
+	//cout << "Items:" << items << endl;
+	if(sum==0){
+		return 0;
+	}
+	return sum/items;
+}
+
+double findAverageHelper(Item* head){
+	if(head == NULL){
+		//cout << "Error: empty list" << endl;
+		return 0;
+	}
+	if(head->next == NULL){
+		return head->val;
+	}
+	return head->val + findAverageHelper(head->next);
+}
+
+int itemNumber(Item* head){
+	if(head == NULL){
+		//cout << "Error: empty list" << endl;
+		return 0;
+	}
+	if(head->next == NULL){
+		return 1;
+	}
+	return 1+itemNumber(head->next);
+}
+
+void printList(ostream& ofile, Item* head)
+{
+  if(head == NULL)
+    ofile << endl;
+  else {
+    ofile << head->val << " ";
+    printList(ofile, head->next);    
+  }
+}
